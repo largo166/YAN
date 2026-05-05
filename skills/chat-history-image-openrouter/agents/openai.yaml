@@ -1,0 +1,4 @@
+interface:
+  display_name: "Shared Image Skill OR"
+  short_description: "Turn chat context into prompts and images."
+  default_prompt: "Use $chat-history-image-openrouter to turn prior conversation context into a final image prompt and generate through OpenRouter."
