@@ -1,3 +1,26 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# Runtime secrets and local data
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+
+# Dependencies and build outputs
+node_modules/
+dist/
+build/
+.vite/
+.cache/
+__pycache__/
+*.pyc
+
+# Local runtime files
+uploads/
+data/
+.playwright-mcp/
+.npm-cache/
