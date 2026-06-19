@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rmo-Ai Daily Review"
+  short_description: "Review and archive Rmo-Ai work daily."
+  default_prompt: "Run the daily Rmo-Ai review and GitHub archive workflow for the current workspace."
