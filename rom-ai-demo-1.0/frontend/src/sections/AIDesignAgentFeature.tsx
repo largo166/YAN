@@ -104,8 +104,7 @@ function formatTime(value: number) {
 async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`);
   if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    throw new Error(data?.detail || (await res.text()));
+    throw new Error(await readErrorMessage(res));
   }
   return res.json();
 }
@@ -116,10 +115,23 @@ async function apiPostForm<T>(path: string, body: FormData): Promise<T> {
     body,
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    throw new Error(data?.detail || (await res.text()));
+    throw new Error(await readErrorMessage(res));
   }
   return res.json();
+}
+
+async function readErrorMessage(res: Response) {
+  const text = await res.text().catch(() => '');
+  if (!text) return `${res.status} ${res.statusText}`.trim();
+  try {
+    const data = JSON.parse(text) as { detail?: unknown; message?: unknown };
+    const detail = data.detail ?? data.message;
+    if (typeof detail === 'string') return detail;
+    if (detail) return JSON.stringify(detail);
+  } catch {
+    // Keep plain text when the server does not return JSON.
+  }
+  return text;
 }
 
 export const AIDesignAgentFeature: React.FC = () => {

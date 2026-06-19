@@ -94,7 +94,7 @@ export function TasksTab({ projectId, tasks, onRefresh }: Props) {
     setMenuTaskId(null);
     setMessage('');
     try {
-      await updateTask(task.id, { status: newStatus });
+      await updateTask(projectId, task.id, { status: newStatus });
       await onRefresh();
     } catch (error) {
       setMessage(`移动失败：${String(error)}`);

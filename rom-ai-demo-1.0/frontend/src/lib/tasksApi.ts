@@ -1,4 +1,18 @@
-const API_BASE = (import.meta.env.VITE_API_BASE ?? 'http://localhost:8000').replace(/\/$/, '');
+﻿const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '');
+
+async function readErrorMessage(res: Response) {
+  const text = await res.text().catch(() => '');
+  if (!text) return `${res.status} ${res.statusText}`.trim();
+  try {
+    const data = JSON.parse(text) as { detail?: unknown; message?: unknown };
+    const detail = data.detail ?? data.message;
+    if (typeof detail === 'string') return detail;
+    if (detail) return JSON.stringify(detail);
+  } catch {
+    // Keep plain text when the server does not return JSON.
+  }
+  return text;
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -9,8 +23,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    throw new Error(data?.detail || (await res.text()));
+    throw new Error(await readErrorMessage(res));
   }
   return res.json();
 }
@@ -58,13 +71,13 @@ export function createTask(projectId: string, payload: TaskCreatePayload) {
   });
 }
 
-export function updateTask(taskId: string, payload: TaskUpdatePayload) {
-  return request<Task>(`/api/tasks/${taskId}`, {
-    method: 'PATCH',
+export function updateTask(projectId: string, taskId: string, payload: TaskUpdatePayload) {
+  return request<Task>(`/api/projects/${projectId}/tasks/${taskId}`, {
+    method: 'PUT',
     body: JSON.stringify(payload),
   });
 }
 
-export function deleteTask(taskId: string) {
-  return request<{ ok: boolean }>(`/api/tasks/${taskId}`, { method: 'DELETE' });
+export function deleteTask(projectId: string, taskId: string) {
+  return request<{ ok: boolean }>(`/api/projects/${projectId}/tasks/${taskId}`, { method: 'DELETE' });
 }

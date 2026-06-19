@@ -1,4 +1,18 @@
-const API_BASE = (import.meta.env.VITE_API_BASE ?? 'http://localhost:8000').replace(/\/$/, '');
+﻿const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '');
+
+async function readErrorMessage(res: Response) {
+  const text = await res.text().catch(() => '');
+  if (!text) return `${res.status} ${res.statusText}`.trim();
+  try {
+    const data = JSON.parse(text) as { detail?: unknown; message?: unknown };
+    const detail = data.detail ?? data.message;
+    if (typeof detail === 'string') return detail;
+    if (detail) return JSON.stringify(detail);
+  } catch {
+    // Keep plain text when the server does not return JSON.
+  }
+  return text;
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -9,8 +23,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    throw new Error(data?.detail || (await res.text()));
+    throw new Error(await readErrorMessage(res));
   }
   return res.json();
 }
@@ -47,17 +60,17 @@ export function createMeeting(projectId: string, payload: MeetingCreatePayload) 
   });
 }
 
-export function getMeeting(meetingId: string) {
-  return request<Meeting>(`/api/meetings/${meetingId}`);
+export function getMeeting(projectId: string, meetingId: string) {
+  return request<Meeting>(`/api/projects/${projectId}/meetings/${meetingId}`);
 }
 
-export function updateMeeting(meetingId: string, payload: Partial<MeetingCreatePayload>) {
-  return request<Meeting>(`/api/meetings/${meetingId}`, {
-    method: 'PATCH',
+export function updateMeeting(projectId: string, meetingId: string, payload: Partial<MeetingCreatePayload>) {
+  return request<Meeting>(`/api/projects/${projectId}/meetings/${meetingId}`, {
+    method: 'PUT',
     body: JSON.stringify(payload),
   });
 }
 
-export function deleteMeeting(meetingId: string) {
-  return request<{ ok: boolean }>(`/api/meetings/${meetingId}`, { method: 'DELETE' });
+export function deleteMeeting(projectId: string, meetingId: string) {
+  return request<{ ok: boolean }>(`/api/projects/${projectId}/meetings/${meetingId}`, { method: 'DELETE' });
 }
